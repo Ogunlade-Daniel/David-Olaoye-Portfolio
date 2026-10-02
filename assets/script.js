@@ -16,6 +16,11 @@
       b.classList.toggle('active',active);
       b.setAttribute('aria-pressed',active);
     });
+    document.querySelectorAll('.theme-dropdown-toggle').forEach(toggle=>{
+      toggle.dataset.currentTheme=theme;
+      const icon=toggle.querySelector('.theme-current-icon');
+      if(icon) icon.dataset.themeIcon=theme;
+    });
   }
   apply(stored);
   mq.addEventListener('change',()=>{if(localStorage.getItem('theme')==='system') apply('system')});
@@ -25,6 +30,58 @@
       localStorage.setItem('theme',t);
       apply(t);
     });
+  });
+})();
+
+/* ---------- THEME DROPDOWN ---------- */
+(function(){
+  let toggle=document.getElementById('themeDropdownToggle');
+  let menu=document.getElementById('themeDropdownMenu');
+
+  if(!toggle || !menu){
+    const legacyMenu=document.querySelector('.theme-switch');
+    if(!legacyMenu) return;
+    const dropdown=document.createElement('div');
+    dropdown.className='theme-dropdown';
+    dropdown.id='themeDropdown';
+    toggle=document.createElement('button');
+    toggle.className='theme-dropdown-toggle';
+    toggle.id='themeDropdownToggle';
+    toggle.type='button';
+    toggle.setAttribute('aria-label','Choose color theme');
+    toggle.setAttribute('aria-expanded','false');
+    toggle.setAttribute('aria-controls','themeDropdownMenu');
+    toggle.innerHTML='<span class="theme-option-icon" aria-hidden="true">T</span><span>Theme</span><svg class="theme-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+    menu=legacyMenu;
+    menu.id='themeDropdownMenu';
+    menu.classList.add('theme-dropdown-menu');
+    menu.hidden=true;
+    const parent=menu.parentElement;
+    parent.insertBefore(dropdown,menu);
+    dropdown.append(toggle,menu);
+  }
+
+  if(!toggle||!menu) return;
+
+  const setOpen=(open)=>{
+    toggle.setAttribute('aria-expanded',String(open));
+    menu.hidden=!open;
+  };
+
+  toggle.addEventListener('click',()=>{
+    setOpen(toggle.getAttribute('aria-expanded')!=='true');
+  });
+  menu.querySelectorAll('[data-theme-set]').forEach(option=>{
+    option.addEventListener('click',()=>setOpen(false));
+  });
+  document.addEventListener('click',event=>{
+    if(!event.target.closest('#themeDropdown')) setOpen(false);
+  });
+  document.addEventListener('keydown',event=>{
+    if(event.key==='Escape' && toggle.getAttribute('aria-expanded')==='true'){
+      setOpen(false);
+      toggle.focus();
+    }
   });
 })();
 
@@ -112,7 +169,19 @@
   const onScroll=()=>btn.classList.toggle('show',window.scrollY>500);
   onScroll();
   window.addEventListener('scroll',onScroll,{passive:true});
-  btn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+  btn.addEventListener('click',()=>{
+    const start=window.scrollY;
+    const duration=window.matchMedia('(prefers-reduced-motion: reduce)').matches?1:Math.min(1800,Math.max(900,start*0.55));
+    let startedAt;
+    const animate=(time)=>{
+      if(startedAt===undefined) startedAt=time;
+      const progress=Math.min((time-startedAt)/duration,1);
+      const eased=progress<.5?4*progress*progress*progress:1-Math.pow(-2*progress+2,3)/2;
+      window.scrollTo({top:start*(1-eased),behavior:'instant'});
+      if(progress<1) window.requestAnimationFrame(animate);
+    };
+    window.requestAnimationFrame(animate);
+  });
 })();
 
 /* ---------- CONTACT FORM ---------- */
