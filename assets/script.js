@@ -2,6 +2,25 @@
    OLAOYE TEMIDARA DAVID · PORTFOLIO · SHARED BEHAVIOR
    ========================================================= */
 
+/* ---------- PAGE LOADER ---------- */
+(function(){
+  const loader=document.getElementById('pageLoader');
+  if(!loader) return;
+  const minimumDuration=650;
+  const startedAt=performance.now();
+  const hide=()=>{
+    window.setTimeout(()=>{
+      loader.classList.add('is-hidden');
+      window.setTimeout(()=>loader.remove(),550);
+    },Math.max(0,minimumDuration-(performance.now()-startedAt)));
+  };
+  if(document.readyState==='complete'){
+    hide();
+  } else {
+    window.addEventListener('load',hide,{once:true});
+  }
+})();
+
 /* ---------- THEME ---------- */
 (function(){
   const root=document.documentElement;
